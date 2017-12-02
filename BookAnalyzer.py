@@ -53,11 +53,8 @@ def main(directory_name, book = 'the_great_book'):
 
 
 def clean_book(book):
-    file = open(str(book)+'.txt',encoding='utf-8')
-    print('Book opened')
-    # Open the book and import it as a string
-    text = file.read()
-    print('Book read')
+    with open(str(book)+'.txt',encoding='utf-8') as reader:
+	    text = reader.read()
     # Remove all the characters which are used by Python to go to a new line
     text = re.sub(r'- \n','', text)
     text = re.sub(r'\n',' ',text)
