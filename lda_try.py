@@ -63,8 +63,10 @@ def lda_running(n_passes = 20, n_words = 8):
     
     lda_result = ldamodel.print_topics(num_topics = n_topics, num_words = n_words)
     times.append(time.time())
-    print("set-up time:",time[1]-time[0])
-    print("lda time:",time[2]-time[1])
+    print("set-up time:",times[1]-times[0])
+    print("lda time:",times[2]-times[1])
+    for i in lda_result:
+        print(i)
     return lda_result
     
 

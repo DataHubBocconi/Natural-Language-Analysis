@@ -8,7 +8,6 @@ import numpy as np
 import os
 import binary_search
 import lda
-import BookAnalyzer
 import time
 
 def create_sparse_matrix(folder, word_list):
@@ -46,10 +45,10 @@ def make_word_list(folder):
     words_tot = []
     for i in range(len(container)):
         print(container[i])
-        with open(container[i],encoding = 'utf-8') as reader:
-            doc = reader.read()
-        words = BookAnalyzer.clean_book(doc)
-        words_tot.extend(words)
+        reader = open(container[i],encoding = 'utf-8')
+        for line in reader:
+            word = line.strip()
+            words_tot.append(word)
     os.chdir(folder)
     unique = set(words_tot)
     print('words:',len(words_tot))
@@ -71,8 +70,8 @@ def main():
     model.fit(mtx)
     times.append(time.time())
     
-    print("set-up time:",time[1]-time[0])
-    print("lda time:",time[2]-time[1])
+    print("set-up time:",times[1]-times[0])
+    print("lda time:",times[2]-times[1])
     
     print('fitting')
     topic_word = model.topic_word_
