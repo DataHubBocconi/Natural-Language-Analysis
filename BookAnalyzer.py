@@ -12,7 +12,7 @@ import pandas as pd
 # This function only wants as input the folder where all your txt files are stored.
 # It then joins them all together into a unique txt file called "the great book.txt"
 def create_corpus(directory_name):
-    '''Puts all the .txt. files in a given folder all together.
+    '''Puts the .txt files in a given folder all together.
     
     Input: directory name
     Output: None. Creates a .txt file called 'the_great_book.txt' in the same
@@ -38,10 +38,11 @@ def create_corpus(directory_name):
 # function. As directory name, you can just put the directory where such book is stored.
 # The function will create two different csv files containing the results of the
 # frequency distribution analysis.
-def main(directory_name, book = 'the_great_book'):
+def main(directory_name, book = 'the_great_book.txt'):
     print('Starting analysis')
     os.chdir(directory_name)
-    print('Set Directory')
+    with open(book, encoding='utf-8') as reader:
+        book = reader.read()
     stemmed = clean_book(book)
     print('The text has been cleaned')
     couple = couples(stemmed)
@@ -59,7 +60,7 @@ def main(directory_name, book = 'the_great_book'):
     return
 
 
-def clean_book(book, min_length=4):
+def clean_book(text, min_length=4):
     '''Removes stopwords and unuseful characters from a string.
     
     Takes in input the text as string and an optional parameter
@@ -68,9 +69,6 @@ def clean_book(book, min_length=4):
     
     Outputs a list of words.
     '''
-    os.chdir("d:\\guglielmo documenti\\progetti   programmazione+\\Python\\Leo_immigraz\\Natural-Language-Analysis\\source")
-    with open(str(book)+'.txt',encoding='utf-8') as reader:
-        text = reader.read()
     #N.B. the order of the following operations is important!
     #remove header
     #text = re.sub(r'.{0,133}', '', text, 1, re.S)
@@ -80,7 +78,9 @@ def clean_book(book, min_length=4):
     text = re.sub(r'\'s','',text)
     #handle new-line that separates whole words (like considered
     #might become con- \nsidered 
-    text = re.sub(r'- \n','', text) 
+    text = re.sub(r'- \n','', text)
+    #removes unnecessary apostrophes (all those not forming contraction)
+    text = re.sub(r"'+(?=\s) | (?<=\s)'+",' ',text)	
     #remove symbols
     text = re.sub(r"[^a-zA-Z0-9_\s'-]", '', text)
     #remove stand-alone words (made of any character
@@ -108,7 +108,7 @@ def clean_book(book, min_length=4):
     if len(errors) != 0:
         print('Warning: errors found during stemming. Follows list of not-working words.')
         print(errors)		
-    return words
+    return stemmed
  
 
 # couples() returns all the combinations of two consecutives words  
