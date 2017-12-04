@@ -56,7 +56,7 @@ def make_word_list(folder):
     return sorted(unique)
 
 
-def main():
+def main(n_iter = 2000, n_topic = 5, n_top_words = 15):
     times = []
     times.append(time.time())
     word_list = make_word_list(os.getcwd())
@@ -65,7 +65,7 @@ def main():
     print(mtx.shape)
     print('created')
     times.append(time.time())
-    model = lda.LDA(n_topics = 5,n_iter=1000, refresh=1000)
+    model = lda.LDA(n_topics = n_topic,n_iter=n_iter, refresh=n_iter)
     print('preparing to fit')
     model.fit(mtx)
     times.append(time.time())
@@ -75,7 +75,7 @@ def main():
     
     print('fitting')
     topic_word = model.topic_word_
-    n_top_words = 8
+    n_top_words = n_top_words
     for i, topic_dist in enumerate(topic_word):
         topic_words = np.array(word_list)[np.argsort(topic_dist)][:-(n_top_words+1):-1]
         print('Topic {}: {}'.format(i, ' '.join(topic_words)))

@@ -31,13 +31,14 @@ def build_lil():
         text_stemmed = text_stemmed.split("\n")
         text_stemmed.pop()
         books.append(text_stemmed)
+    os.chdir(path)
     return books
     #The output of this function is a list of lists, one list for each of our original documents, tokenized, stopped and stemmed.
     
    
 
-def lda_running(n_passes = 20, n_words = 8):  
-    n_topics = 5
+def lda_running(n_passes = 80, n_topics = 5, n_words = 15):  
+    print('n_passes',n_passes,'n_iter',n_passes*50,'n_topics',n_topics,'n_words',n_words)
     times = []
     times.append(time.time())
     books = build_lil()
@@ -67,7 +68,7 @@ def lda_running(n_passes = 20, n_words = 8):
     print("lda time:",times[2]-times[1])
     for i in lda_result:
         print(i)
-    return lda_result
+    return 
     
 
 
