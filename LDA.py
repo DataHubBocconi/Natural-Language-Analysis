@@ -9,8 +9,37 @@ import os
 import binary_search
 import lda
 import time
+import cleanBook
 
-def create_sparse_matrix(folder, word_list):
+def compute_result(n_iter = 2000, n_topic = 5, n_top_words = 15):
+    _init()
+    word_list = _make_word_list()
+    mtx= _create_sparse_matrix(word_list)
+    model = lda.LDA(n_topics = n_topic,n_iter=n_iter, refresh=n_iter)
+    model.fit(mtx)
+    
+    topic_word = model.topic_word_
+    n_top_words = n_top_words
+    vocabulary = []
+    frequencies = []
+    for i, topic_dist in enumerate(topic_word):
+        topic_words = np.array(word_list)[np.argsort(topic_dist)][:-(n_top_words+1):-1]
+        vocabulary.append(topic_words)
+        frequencies.append(topic_dist[np.argsort(topic_dist)][:-(n_top_words+1):-1])
+    _handle_output(vocabulary, frequencies)
+        
+def _handle_output(vocabulary, frequencies, n_topic):
+    freq = []
+    for topic in frequencies:
+        freq.append([str(elem) for elem in topic])
+    text = []
+    for words, frequence in zip(vocabulary, freq):
+        text.append(",".join(words))
+        text.append(",".join(frequence))
+    with open(path+os.sep+'result'+os.sep+str(n_topic)+'.csv', 'w', encoding='utf-8') as writer:
+        writer.write("\n".join(text))
+
+def _create_sparse_matrix(word_list, path = os.getcwd()):
     '''
     create sparse matrix of size rows = number of documents and columns = number of words
     
@@ -19,84 +48,81 @@ def create_sparse_matrix(folder, word_list):
     
     word_list is the unique, ordered collection of all the words in the texts
     '''
-    os.chdir(folder+"\\source")
-    container = os.listdir()
+    container = os.listdir(path+os.sep+'source')
     columns = len(word_list)
     rows = len(container)
     bin_search = binary_search.binary_search()
     mtx = sps.lil_matrix((rows, columns),dtype = np.int32)
-    count = 0
-    for i in range(len(container)):
-        print(container[i])
-        reader = open(container[i],encoding = 'utf-8')
-        for line in reader:
-            word = line.strip()
-            count += 1
-            index = bin_search.binary_search_index(word_list, word)
-            mtx[i, index] += 1
-        reader.close()
-    os.chdir(folder)
-    print('words:',count)
+    i = 0
+    for file in container:
+        if _check_temp_read(file, path):
+            reader = open(path+os.sep+"temp"+os.sep+'_'+file, encoding='utf-8')
+            for line in reader:
+                word = line.strip()
+                index = bin_search.binary_search_index(word_list, word)
+                mtx[i, index] += 1
+            reader.close()
+        else:
+            with open(path+os.sep+"source"+os.sep+file, encoding='utf-8') as reader:
+                text = reader.read()
+            words = cleanBook.clean_book(text)
+            for word in words:
+                index = bin_search.binary_search_index(word_list, word)
+                mtx[i, index] += 1
     return mtx
 
-def make_word_list(folder):
-    os.chdir(folder+"\\source")
-    container = os.listdir()
-    words_tot = []
-    for i in range(len(container)):
-        print(container[i])
-        reader = open(container[i],encoding = 'utf-8')
-        for line in reader:
-            word = line.strip()
-            words_tot.append(word)
-    os.chdir(folder)
-    unique = set(words_tot)
-    print('words:',len(words_tot))
-    print('unique words:',len(unique))
-    return sorted(unique)
+def _make_word_list(path=os.getcwd()):
+    container = os.listdir(path+os.sep+"source")
+    words_unique = set()
+    for file in container:
+        if _check_temp_read(file, path):
+            reader = open(path+os.sep+"temp"+os.sep+'_'+file, encoding='utf-8')
+            for line in reader:
+                word = line.strip()
+                words_unique.add(word)
+            reader.close()
+        else:
+            with open(path+os.sep+"source"+os.sep+file, encoding='utf-8') as reader:
+                text = reader.read()
+            words = cleanBook.clean_book(text)
+            words_unique.update(words)
+            _write_temp(words, path, file)
+    return sorted(words_unique)
+            
+def _check_temp_read(file, path):
+    if os.path.exists(path+os.sep+'temp'+os.sep+'_'+file):
+        return True
+    else:
+        return False
 
+def _write_temp(words, path, file):
+    with open(path+os.sep+'temp'+os.sep+'_'+file, 'w', encoding='utf-8') as writer:
+        writer.write("\n".join(words))
 
-def main(n_iter = 2000, n_topic = 5, n_top_words = 15):
-    times = []
-    times.append(time.time())
-    word_list = make_word_list(os.getcwd())
-    print('ready to create')
-    mtx= create_sparse_matrix(os.getcwd(),word_list)
-    print(mtx.shape)
-    print('created')
-    times.append(time.time())
-    model = lda.LDA(n_topics = n_topic,n_iter=n_iter, refresh=n_iter)
-    print('preparing to fit')
-    model.fit(mtx)
-    times.append(time.time())
-    
-    print("set-up time:",times[1]-times[0])
-    print("lda time:",times[2]-times[1])
-    
-    print('fitting')
-    topic_word = model.topic_word_
-    n_top_words = n_top_words
-    for i, topic_dist in enumerate(topic_word):
-        topic_words = np.array(word_list)[np.argsort(topic_dist)][:-(n_top_words+1):-1]
-        print('Topic {}: {}'.format(i, ' '.join(topic_words)))
-        print(topic_dist[np.argsort(topic_dist)][:-(n_top_words+1):-1])
+def _init(path = os.getcwd()):
+    '''does initial check on directories and files to be analyzed
+    '''
+    source = path+os.sep+'source'
+    temp = path+os.sep+'temp'
+    result = path+os.sep+'result'
+    if os.path.isdir(source):
+        l = os.listdir(source)
+        if len(l) != 0:
+            for file in l:
+                if os.path.splitext(source+os.sep+file)[1] != '.txt':
+                    raise Exception('Found a file in source folder which is not a .txt file format')
+        else:
+            raise Exception('No files found in the source folder')
+    else:
+        raise Exception('No source folder found')
         
-def test():
-    X = lda.datasets.load_reuters()
-    vocab = lda.datasets.load_reuters_vocab()
-    return vocab
-    titles = lda.datasets.load_reuters_titles()
-    model = lda.LDA(n_topics=20, n_iter=500, random_state=1)
-    model.fit(X)  # model.fit_transform(X) is also available
-    topic_word = model.topic_word_  # model.components_ also works
-    n_top_words = 8
-    for i, topic_dist in enumerate(topic_word):
-        print(i)
-        print(topic_dist,'\n',np.argsort(topic_dist),len(topic_dist))
-        topic_words = np.array(vocab)[np.argsort(topic_dist)][:-(n_top_words+1):-1]
-        print('Topic {}: {}'.format(i, ' '.join(topic_words)))
-    
-    
+    if not os.path.isdir(temp):
+        os.mkdir(temp)
+     if not os.path.isdir(result):
+        os.mkdir(result)
+
+
+   
     
     
     
