@@ -9,6 +9,19 @@ import stop_words
 import re
 import nltk
 
+def test():
+    global a
+    import os
+    path = os.getcwd()
+    with open(path+'\\source\\'+'americafamily.txt',encoding='utf-8')as r:
+        text = r.read()
+    a = clean_book(text)
+    for word in a:
+        try:
+            print(int(word))
+        except:
+            pass
+
 def clean_book(text, min_length=4):
     '''Removes stopwords and unuseful characters from a string.
     
@@ -35,6 +48,8 @@ def clean_book(text, min_length=4):
     #remove stand-alone words (made of any character
     #of length from one to min_length: {1,min_length}
     text = re.sub(r'(?<=\s).{1,'+str(min_length-1)+r'}(?=\s)', '', text)
+    #remove numbers
+    text = re.sub(r'(?<=\s)[0-9_-]+(?=[\s.,])', '', text)
     #remove new lines
     text = re.sub(r'\n',' ',text)
     text = text.lower()

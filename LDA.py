@@ -8,7 +8,6 @@ import numpy as np
 import os
 import binary_search
 import lda
-import time
 import cleanBook
 
 def compute_result(n_iter = 2000, n_topic = 5, n_top_words = 15):
@@ -26,9 +25,9 @@ def compute_result(n_iter = 2000, n_topic = 5, n_top_words = 15):
         topic_words = np.array(word_list)[np.argsort(topic_dist)][:-(n_top_words+1):-1]
         vocabulary.append(topic_words)
         frequencies.append(topic_dist[np.argsort(topic_dist)][:-(n_top_words+1):-1])
-    _handle_output(vocabulary, frequencies)
-        
-def _handle_output(vocabulary, frequencies, n_topic):
+    _handle_output(vocabulary, frequencies, n_topic)
+
+def _handle_output(vocabulary, frequencies, n_topic, path=os.getcwd()):
     freq = []
     for topic in frequencies:
         freq.append([str(elem) for elem in topic])
@@ -69,6 +68,7 @@ def _create_sparse_matrix(word_list, path = os.getcwd()):
             for word in words:
                 index = bin_search.binary_search_index(word_list, word)
                 mtx[i, index] += 1
+        i = i + 1
     return mtx
 
 def _make_word_list(path=os.getcwd()):
@@ -118,17 +118,8 @@ def _init(path = os.getcwd()):
         
     if not os.path.isdir(temp):
         os.mkdir(temp)
-     if not os.path.isdir(result):
+    if not os.path.isdir(result):
         os.mkdir(result)
-
-
-   
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    #clear result
+    for file in os.listdir(result):
+        os.remove(result+os.sep+file)
