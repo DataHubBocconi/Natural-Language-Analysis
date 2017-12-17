@@ -98,7 +98,7 @@ def _create_sparse_matrix(word_list, path = os.getcwd()):
         if _check_temp_read(file, path):
             reader = open(path+os.sep+"temp"+os.sep+'_'+file, encoding='utf-8')
             for line in reader:
-                word = line.strip()
+                word = line.rstrip('\n')
                 index = bin_search.binary_search_index(word_list, word)
                 mtx[i, index] += 1
             reader.close()
@@ -119,16 +119,12 @@ def _make_word_list(path=os.getcwd()):
         if _check_temp_read(file, path):
             reader = open(path+os.sep+"temp"+os.sep+'_'+file, encoding='utf-8')
             for line in reader:
-                word = line.strip()
+                word = line.rstrip('\n')
                 words_unique.add(word)
             reader.close()
         else:
             with open(path+os.sep+"source"+os.sep+file, encoding='utf-8') as reader:
-                try:
-                    text = reader.read()
-                except Exception as exc:
-                    print(exc)
-                    print(file)
+                text = reader.read()
             words = cleanBook.clean_book(text)
             words_unique.update(words)
             _write_temp(words, path, file)
