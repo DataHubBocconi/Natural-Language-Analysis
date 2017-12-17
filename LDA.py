@@ -9,13 +9,16 @@ import os
 import binary_search
 import lda
 import cleanBook
+import time
 
 def compute_result(n_iter = 2000, n_topic = 5, n_top_words = 15):
+    start_time = time.time()
     _init()
     word_list = _make_word_list()
     mtx= _create_sparse_matrix(word_list)
     model = lda.LDA(n_topics = n_topic,n_iter=n_iter, refresh=n_iter)
     model.fit(mtx)
+    end_time = time.time()
     
     topic_word = model.topic_word_
     n_top_words = n_top_words
@@ -25,18 +28,56 @@ def compute_result(n_iter = 2000, n_topic = 5, n_top_words = 15):
         topic_words = np.array(word_list)[np.argsort(topic_dist)][:-(n_top_words+1):-1]
         vocabulary.append(topic_words)
         frequencies.append(topic_dist[np.argsort(topic_dist)][:-(n_top_words+1):-1])
-    _handle_output(vocabulary, frequencies, n_topic)
+    tot_words = mtx.sum()
+    #n_topic, n_iter, n_doc, n_unique_words, n_total_words, n_top_words, elapsed_time
+    statistics = (n_topic, n_iter, mtx.shape[0], mtx.shape[1], tot_words, n_top_words, end_time - start_time)
+    _handle_output(vocabulary, frequencies, statistics, n_topic)
+        
+def compute_result_topics(n_iter = 2000, n_topics = 5, n_top_words = 30):
+    '''Carries out the analysis for multiple topics, specifically for
+    range(1, n_topics+1). So it will do n_topics analyses and produce 
+    n_topics reports. It does so more efficiently then multiple calls
+    to compute_result() with different values for n_topic.
+    This function assumes that the documents in source are not changed
+    throughout the course of operation.
+    Note how n_topics parameter here changes meaning w.r.t. compute_result()
+    '''
+    _init()
+    word_list = _make_word_list()
+    mtx= _create_sparse_matrix(word_list)
+    tot_words = mtx.sum()
+    for n_topic in range(1, n_topics+1):
+        start_time = time.time()
+        model = lda.LDA(n_topics=n_topic, n_iter=n_iter, refresh=n_iter)
+        model.fit(mtx)
+        end_time = time.time()
+        topic_word = model.topic_word_
+        vocabulary = []
+        frequencies = []
+        for i, topic_dist in enumerate(topic_word):
+            topic_words = np.array(word_list)[np.argsort(topic_dist)][:-(n_top_words+1):-1]
+            vocabulary.append(topic_words)
+            frequencies.append(topic_dist[np.argsort(topic_dist)][:-(n_top_words+1):-1])
+        #n_topic, n_iter, n_doc, n_unique_words, n_total_words, n_top_words, elapsed_time
+        statistics = (n_topic, n_iter, mtx.shape[0], mtx.shape[1], tot_words, n_top_words, end_time - start_time)
+        _handle_output(vocabulary, frequencies, statistics, n_topic)
 
-def _handle_output(vocabulary, frequencies, n_topic, path=os.getcwd()):
+def _handle_output(vocabulary, frequencies, statistics, n_topic, path=os.getcwd()):
     freq = []
     for topic in frequencies:
         freq.append([str(elem) for elem in topic])
     text = []
+    text.append("n_topic,%s,n_iter,%s,n_documents,%s,n_unique_words,%s,n_total_words,%s,n_top_words,%s,elapsed_time(seconds),%s\n"%(statistics))
     for words, frequence in zip(vocabulary, freq):
         text.append(",".join(words))
         text.append(",".join(frequence))
     with open(path+os.sep+'result'+os.sep+str(n_topic)+'.csv', 'w', encoding='utf-8') as writer:
         writer.write("\n".join(text))
+    files = os.listdir(path+os.sep+'source')
+    with open(path+os.sep+'result'+os.sep+"source.txt", 'w', encoding='utf-8') as writer:
+        writer.write("\n".join(files))
+    
+        
 
 def _create_sparse_matrix(word_list, path = os.getcwd()):
     '''
@@ -83,7 +124,11 @@ def _make_word_list(path=os.getcwd()):
             reader.close()
         else:
             with open(path+os.sep+"source"+os.sep+file, encoding='utf-8') as reader:
-                text = reader.read()
+                try:
+                    text = reader.read()
+                except Exception as exc:
+                    print(exc)
+                    print(file)
             words = cleanBook.clean_book(text)
             words_unique.update(words)
             _write_temp(words, path, file)
