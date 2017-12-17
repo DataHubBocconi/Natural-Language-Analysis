@@ -71,7 +71,7 @@ def _handle_output(vocabulary, frequencies, statistics, n_topic, path=os.getcwd(
     for words, frequence in zip(vocabulary, freq):
         text.append(",".join(words))
         text.append(",".join(frequence))
-    with open(path+os.sep+'result'+os.sep+str(n_topic)+'.csv', 'w', encoding='utf-8') as writer:
+    with open(path+os.sep+'result'+os.sep+str(n_topic)+'_ldaPackage.csv', 'w', encoding='utf-8') as writer:
         writer.write("\n".join(text))
     files = os.listdir(path+os.sep+'source')
     with open(path+os.sep+'result'+os.sep+"source.txt", 'w', encoding='utf-8') as writer:
