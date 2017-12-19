@@ -14,11 +14,11 @@ def clean_book(book_path):
     '''
     with open(book_path, encoding='latin-1') as reader:
         book = reader.read()
-    stemmed = clean_book(book)
+    stemmed = stem_clean(book)
     return stemmed
 
 
-def clean_book(text, min_length=4):
+def stem_clean(text, min_length=4):
     '''Removes stopwords and unuseful characters from a string.
 
     Takes in input the text as string and an optional parameter
