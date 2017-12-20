@@ -3,7 +3,6 @@
 """
 Created on Sat Nov 18 14:20:14 2017
 
-@author: renatoberlinghieri
 """
 from nltk.tokenize import RegexpTokenizer
 from stop_words import get_stop_words
