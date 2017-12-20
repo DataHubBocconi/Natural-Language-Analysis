@@ -91,7 +91,6 @@ def _create_sparse_matrix(word_list, path = os.getcwd()):
     container = os.listdir(path+os.sep+'source')
     columns = len(word_list)
     rows = len(container)
-    bin_search = binary_search.binary_search()
     mtx = sps.lil_matrix((rows, columns),dtype = np.int32)
     i = 0
     for file in container:
@@ -99,7 +98,7 @@ def _create_sparse_matrix(word_list, path = os.getcwd()):
             reader = open(path+os.sep+"temp"+os.sep+'_'+file, encoding='utf-8')
             for line in reader:
                 word = line.rstrip('\n')
-                index = bin_search.binary_search_index(word_list, word)
+                index = binary_search.binary_search_index(word_list, word)
                 mtx[i, index] += 1
             reader.close()
         else:
@@ -107,7 +106,7 @@ def _create_sparse_matrix(word_list, path = os.getcwd()):
                 text = reader.read()
             words = cleanBook.clean_book(text)
             for word in words:
-                index = bin_search.binary_search_index(word_list, word)
+                index = binary_search.binary_search_index(word_list, word)
                 mtx[i, index] += 1
         i = i + 1
     return mtx
